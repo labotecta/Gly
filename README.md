@@ -1,5 +1,5 @@
 # Gly
-Distribución de las galaxias en en el universo.  Distribution of galaxies in the universe. A machine learning approach.
+Distribución de las galaxias en el universo.  Distribution of galaxies in the universe. A machine learning approach.
 
 Este repositorio contiene los ficheros de datos, imágenes y videos relacionados con en el trabajo: Distribución de galaxias en el universo. Una aproximación mediante aprendizaje automático.
 
