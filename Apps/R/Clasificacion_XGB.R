@@ -24,48 +24,23 @@ cs  <- 0.94
 ss  <- 1
 cb  <- 1
 
-disco   <- "F"
+disco   <- "C"
 tipomta <- "tot"
-marcas  <- 444
-dmina   <- 600000
-dmaxa   <- 1000000
+marcas  <- "444"
+dmina   <- "600000"
+dmaxa   <- "1000000"
 anguloa <- "_8_12_15_70_"
-dminb   <- 600000
-dmaxb   <- 1000000
+dminb   <- "600000"
+dmaxb   <- "1000000"
 angulob <- "_12_16_15_70_"
 
 normalizar_estandar <- FALSE
+
 normalizar_gly      <- FALSE
-
-# AR 8-16
-#xnorme <- -23.92
-#ynorme <-  -1.74
-#znorme <-  21.11
-#unorme <-  17.63
-
-# AR 8-12
-#xnorme <- -23.28
-#ynorme <-  12.02
-#znorme <-  21.22
-#unorme <-  15.81
-
-# AR 8-16
-#xnormp <-  23.92
-#ynormp <-  -1.74
-#znormp <-  21.11
-#unormp <-  17.63
-
-# AR 12-16
-#xnormp <- -24.50
-#ynormp <- -14.12
-#znormp <-  21.02
-#unormp <-  15.63
-
 xnorme <-  0.0
 ynorme <-  0.0
 znorme <-  0.0
 unorme <-  1.0
-
 xnormp <-  0.0
 ynormp <-  0.0
 znormp <-  0.0

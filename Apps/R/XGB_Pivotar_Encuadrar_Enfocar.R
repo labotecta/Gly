@@ -107,7 +107,7 @@ cs  <- 0.94
 ss  <- 1
 cb  <- 1
 
-disco   <- "F"
+disco   <- "C"
 marcas  <- "444"
 dmina   <- "600000"
 dmaxa   <- "1000000"
