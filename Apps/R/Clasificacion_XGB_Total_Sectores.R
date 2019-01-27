@@ -1,18 +1,22 @@
 rm(list = ls())
-library(MASS, pos=14)
+library(lattice)
+library(ggplot2)
 library(xgboost)
 library(caret)
 library(data.table)
 
-desamb <- "_Lucas"
+desamb  <- "_Lucas"
+casoini <-  1
+casofin <- 40
+disco   <- "C"
 
-ponderar <- TRUE
 nr  <- 620
 eta <- 0.084
 md  <- 13
 cs  <- 0.94
 
-disco <- "C"
+ponderar <- TRUE
+salres   <- FALSE
 
 if (ponderar){
   logregobj <- function(preds, dtrain) {
@@ -38,12 +42,12 @@ if (ponderar){
   )
 }
 
-casos <- 40
 datos <- data.frame(
   celdas  =character(),
   galaxias=character(),
   stringsAsFactors=FALSE
 )
+
 datos[ 1,"celdas"] = paste(sep="",disco,":/Gly/G_1_10_448_8_16_15_70_550000_850000_muestra_tot_%s.csv")
 datos[ 2,"celdas"] = paste(sep="",disco,":/Gly/G_1_10_456_8_16_15_70_500000_900000_muestra_tot_%s.csv")
 datos[ 3,"celdas"] = paste(sep="",disco,":/Gly/G_1_10_458_8_16_15_70_450000_950000_muestra_tot_%s.csv")
@@ -134,37 +138,55 @@ datos[38,"galaxias"] = paste(sep="",disco,":/Gly/G_1_10_366_8_16_15_70_700000_15
 datos[39,"galaxias"] = paste(sep="",disco,":/Gly/G_1_10_362_8_16_15_70_650000_1550000_galaxias_intA.csv")
 datos[40,"galaxias"] = paste(sep="",disco,":/Gly/G_1_10_360_8_16_15_70_600000_1600000_galaxias_intA.csv")
 
-resultados <- data.frame(
-  linea_cat   = character(),
-  linea_az    = character(),
-  linea_azaj  = character(),
-  lineag_cat  = character(),
-  lineag_az   = character(),
-  lineag_azaj = character(),
-  stringsAsFactors = FALSE
-)
+if (salres){
+  resultados <- data.frame(
+    linea_cat   = character(),
+    linea_az    = character(),
+    linea_azaj  = character(),
+    lineag_cat  = character(),
+    lineag_az   = character(),
+    lineag_azaj = character(),
+    stringsAsFactors = FALSE
+  )
+}
 fi  <- paste(sep="",disco,":/Gly/Total_Sectores_Celdas",desamb,".csv")
 cat(sprintf("Ponderar   : %9s",ponderar),    file=fi, append=TRUE, sep="\n")
 cat(sprintf("nr         : %9d",nr),          file=fi, append=TRUE, sep="\n")
 cat(sprintf("eta        : %9.3f",eta),       file=fi, append=TRUE, sep="\n")
 cat(sprintf("md         : %9d",md),          file=fi, append=TRUE, sep="\n")
 cat(sprintf("cs         : %9.3f\n",cs),      file=fi, append=TRUE, sep="\n")
+cat("---------------------------------- -------- ENTRENAR ---------- ----------- PROBAR -----------------------", file=fi, append=TRUE, sep="\n")
+cat("Muestra    Kappa    PValue Acierto Obser. Vacias Ocupad %Ocupad Obser. Vacias Ocupad %Ocupad Vacias Ocupad", file=fi, append=TRUE, sep="\n")
+cat("--------- -------- ------- ------- ------ ------ ------ ------- ------ ------ ------ ------- ------ ------", file=fi, append=TRUE, sep="\n")
 fig <- paste(sep="",disco,":/Gly/Total_Sectores_Galaxias",desamb,".csv")
 cat(sprintf("Ponderar   : %9s",ponderar),    file=fig, append=TRUE, sep="\n")
 cat(sprintf("nr         : %9d",nr),          file=fig, append=TRUE, sep="\n")
 cat(sprintf("eta        : %9.3f",eta),       file=fig, append=TRUE, sep="\n")
 cat(sprintf("md         : %9d",md),          file=fig, append=TRUE, sep="\n")
 cat(sprintf("cs         : %9.3f\n",cs),      file=fig, append=TRUE, sep="\n")
+cat("---------------------------------- -------- ENTRENAR ---------- ----------- PROBAR -----------------------", file=fig, append=TRUE, sep="\n")
+cat("Muestra    Kappa    PValue Acierto Obser. Vacias Ocupad %Ocupad Obser. Vacias Ocupad %Ocupad Vacias Ocupad", file=fig, append=TRUE, sep="\n")
+cat("--------- -------- ------- ------- ------ ------ ------ ------- ------ ------ ------ ------- ------ ------", file=fig, append=TRUE, sep="\n")
 
-pb <- winProgressBar(title="Total sectores", min=0, max=casos, width=400)
-for(i in 1:casos){
+op <- options(digits.secs=6)
+momento <- Sys.time()
+print(momento)
+cat(sprintf("%s\n", momento), file=fi, append=TRUE, sep="\n")
+options(op)
+ptm <- proc.time()
+
+casos   <- casofin - casoini + 1
+pb      <- winProgressBar(title="Total sectores", min=0, max=casos, width=400)
+casoact <- 0
+
+for(i in casoini:casofin){
+  casoact <- casoact + 1  
 
   # Celdas
-  
   cat(sprintf(datos[i,"celdas"],""), file=fi, append=TRUE, sep="\n")
   datosentrenar <- read.table(sprintf(datos[i,"celdas"],"meA"), header=TRUE, sep=";", na.strings="NA", dec=",", strip.white=TRUE)
   ponderae      <- ifelse(datosentrenar$n == 0, 1, datosentrenar$n)
-  entrena       <- datosentrenar[,-c(5)]
+  entrena       <- datosentrenar[,c(1,2,3,4)]
   setDT(entrena)
   coordenadasEntrena  <- model.matrix(~.+0, data = entrena [,-c("E"), with=F]) 
   Eentrena      <- as.numeric(entrena$E)
@@ -173,7 +195,7 @@ for(i in 1:casos){
   rm(coordenadasEntrena)
   gc()
   datosprobar   <- read.table(sprintf(datos[i,"celdas"],"mpA"), header=TRUE, sep=";", na.strings="NA", dec=",", strip.white=TRUE)
-  prueba        <- datosprobar  [,-c(5)]
+  prueba        <- datosprobar  [,c(1,2,3,4)]
   setDT(prueba)
   coordenadasPrueba <- model.matrix(~.+0, data = prueba  [,-c("E"), with=F])
   Eprueba       <- as.numeric(prueba$E)
@@ -186,27 +208,29 @@ for(i in 1:casos){
   pred          <- predict(bst, dprueba)
   pred          <- ifelse (pred > 0.5, 1, 0)
   mc            <- confusionMatrix(factor(pred,levels=0:1), factor(Eprueba,levels=0:1))
-  linea <- gsub('\\.',',',paste(sep="",
-  "Hyperleda",
-  sprintf(" %5.3f",eta),
-  sprintf(" %5.2f",cs),
-  sprintf(" %4.1f",md),
-  sprintf(" %8.5f",unname(mc$overall[2])),
-  sprintf(" %7.5f",unname(mc$overall[7])),
-  sprintf(" %7.5f",unname(mc$overall[1])),
-  sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
-  sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
-  sprintf(" %6d",mc$table[1,1]),
-  sprintf(" %6d",mc$table[2,2])
-  ))
-  resultados[i,"linea_cat"] = linea
+  if (salres){
+    linea <- gsub('\\.',',',paste(sep="",
+      "Hyperleda",
+      sprintf(" %5.3f",eta),
+      sprintf(" %5.2f",cs),
+      sprintf(" %4.1f",md),
+      sprintf(" %8.5f",unname(mc$overall[2])),
+      sprintf(" %7.5f",unname(mc$overall[7])),
+      sprintf(" %7.5f",unname(mc$overall[1])),
+      sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
+      sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
+      sprintf(" %6d",mc$table[1,1]),
+      sprintf(" %6d",mc$table[2,2])
+    ))
+    resultados[i,"linea_cat"] = linea
+  }
   cat(sprintf("Hyperleda %8.5f %7.5f %7.5f %6d %6d %6d %7.5f %6d %6d %6d %7.5f %6d %6d",unname(mc$overall[2]),unname(mc$overall[7]),unname(mc$overall[1]),nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena),nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba),mc$table[1,1],mc$table[2,2]), file=fi, append=TRUE, sep="\n")
 
   rm(pred)
   gc()
   datosentrenar <- read.table(sprintf(datos[i,"celdas"],"az_meA"), header=TRUE, sep=";", na.strings="NA", dec=",", strip.white=TRUE)
   ponderae      <- ifelse(datosentrenar$n == 0, 1, datosentrenar$n)
-  entrena       <- datosentrenar[,-c(5)]
+  entrena       <- datosentrenar[,c(1,2,3,4)]
   setDT(entrena)
   coordenadasEntrena  <- model.matrix(~.+0, data = entrena [,-c("E"), with=F]) 
   Eentrena      <- as.numeric(entrena$E)
@@ -215,7 +239,7 @@ for(i in 1:casos){
   rm(coordenadasEntrena)
   gc()
   datosprobar   <- read.table(sprintf(datos[i,"celdas"],"az_mpA"), header=TRUE, sep=";", na.strings="NA", dec=",", strip.white=TRUE)
-  prueba        <- datosprobar  [,-c(5)]
+  prueba        <- datosprobar  [,c(1,2,3,4)]
   setDT(prueba)
   coordenadasPrueba   <- model.matrix(~.+0, data = prueba  [,-c("E"), with=F])
   Eprueba       <- as.numeric(prueba$E)
@@ -228,26 +252,28 @@ for(i in 1:casos){
   pred          <- predict (bstaz, dprueba)
   pred          <- ifelse (pred > 0.5, 1, 0)
   mc            <- confusionMatrix(factor(pred,levels=0:1), factor(Eprueba,levels=0:1))
-  linea <- gsub('\\.',',',paste(sep="",
-  "Azar     ",
-  sprintf(" %5.3f",eta),
-  sprintf(" %5.2f",cs),
-  sprintf(" %4.1f",md),
-  sprintf(" %8.5f",unname(mc$overall[2])),
-  sprintf(" %7.5f",unname(mc$overall[7])),
-  sprintf(" %7.5f",unname(mc$overall[1])),
-  sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
-  sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
-  sprintf(" %6d",mc$table[1,1]),
-  sprintf(" %6d",mc$table[2,2])
-  ))
-  resultados[i,"linea_az"] = linea
+  if (salres){
+    linea <- gsub('\\.',',',paste(sep="",
+      "Azar     ",
+      sprintf(" %5.3f",eta),
+      sprintf(" %5.2f",cs),
+      sprintf(" %4.1f",md),
+      sprintf(" %8.5f",unname(mc$overall[2])),
+      sprintf(" %7.5f",unname(mc$overall[7])),
+      sprintf(" %7.5f",unname(mc$overall[1])),
+      sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
+      sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
+      sprintf(" %6d",mc$table[1,1]),
+      sprintf(" %6d",mc$table[2,2])
+    ))
+    resultados[i,"linea_az"] = linea
+  }
   cat(sprintf("Azar      %8.5f %7.5f %7.5f %6d %6d %6d %7.5f %6d %6d %6d %7.5f %6d %6d",unname(mc$overall[2]),unname(mc$overall[7]),unname(mc$overall[1]),nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena),nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba),mc$table[1,1],mc$table[2,2]), file=fi, append=TRUE, sep="\n")
   rm(pred)
   gc()
   datosentrenar <- read.table(sprintf(datos[i,"celdas"],"azaj_meA"), header=TRUE, sep=";", na.strings="NA", dec=",", strip.white=TRUE)
   ponderae      <- ifelse(datosentrenar$n == 0, 1, datosentrenar$n)
-  entrena       <- datosentrenar[,-c(5)]
+  entrena       <- datosentrenar[,c(1,2,3,4)]
   setDT(entrena)
   coordenadasEntrena  <- model.matrix(~.+0, data = entrena [,-c("E"), with=F]) 
   Eentrena      <- as.numeric(entrena$E)
@@ -256,7 +282,7 @@ for(i in 1:casos){
   rm(coordenadasEntrena)
   gc()
   datosprobar   <- read.table(sprintf(datos[i,"celdas"],"azaj_mpA"), header=TRUE, sep=";", na.strings="NA", dec=",", strip.white=TRUE)
-  prueba        <- datosprobar  [,-c(5)]
+  prueba        <- datosprobar  [,c(1,2,3,4)]
   setDT(prueba)
   coordenadasPrueba   <- model.matrix(~.+0, data = prueba  [,-c("E"), with=F])
   Eprueba       <- as.numeric(prueba$E)
@@ -269,20 +295,22 @@ for(i in 1:casos){
   pred          <- predict (bstazaj, dprueba)
   pred          <- ifelse (pred > 0.5, 1, 0)
   mc            <- confusionMatrix(factor(pred,levels=0:1), factor(Eprueba,levels=0:1))
-  linea <- gsub('\\.',',',paste(sep="",
-  "Azar ajus",
-  sprintf(" %5.3f",eta),
-  sprintf(" %5.2f",cs),
-  sprintf(" %4.1f",md),
-  sprintf(" %8.5f",unname(mc$overall[2])),
-  sprintf(" %7.5f",unname(mc$overall[7])),
-  sprintf(" %7.5f",unname(mc$overall[1])),
-  sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
-  sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
-  sprintf(" %6d",mc$table[1,1]),
-  sprintf(" %6d",mc$table[2,2])
-  ))
-  resultados[i,"linea_azaj"] = linea
+  if (salres){
+    linea <- gsub('\\.',',',paste(sep="",
+      "Azar ajus",
+      sprintf(" %5.3f",eta),
+      sprintf(" %5.2f",cs),
+      sprintf(" %4.1f",md),
+      sprintf(" %8.5f",unname(mc$overall[2])),
+      sprintf(" %7.5f",unname(mc$overall[7])),
+      sprintf(" %7.5f",unname(mc$overall[1])),
+      sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
+      sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
+      sprintf(" %6d",mc$table[1,1]),
+      sprintf(" %6d",mc$table[2,2])
+    ))
+    resultados[i,"linea_azaj"] = linea
+  }
   cat(sprintf("Azar ajus %8.5f %7.5f %7.5f %6d %6d %6d %7.5f %6d %6d %6d %7.5f %6d %6d",unname(mc$overall[2]),unname(mc$overall[7]),unname(mc$overall[1]),nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena),nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba),mc$table[1,1],mc$table[2,2]), file=fi, append=TRUE, sep="\n")
   rm(pred)
   gc()
@@ -291,7 +319,7 @@ for(i in 1:casos){
   
   cat(datos[i,"galaxias"], file=fig, append=TRUE, sep="\n")
   datosprobar <- read.table(datos[i,"galaxias"], header=TRUE, sep=";", na.strings="NA", dec=",", strip.white=TRUE)
-  prueba      <- datosprobar  [,-c(5)]
+  prueba      <- datosprobar  [,c(1,2,3,4)]
   setDT(prueba)
   coordenadasPrueba   <- model.matrix(~.+0, data = prueba  [,-c("E"), with=F])
   Eprueba     <- as.numeric(prueba$E)
@@ -302,39 +330,43 @@ for(i in 1:casos){
   pred        <- predict(bst, dprueba)
   pred        <- ifelse (pred > 0.5, 1, 0)
   mc          <- confusionMatrix(factor(pred,levels=0:1), factor(Eprueba,levels=0:1))
-  linea <- gsub('\\.',',',paste(sep="",
-  "Hyperleda",
-  sprintf(" %5.3f",eta),
-  sprintf(" %5.2f",cs),
-  sprintf(" %4.1f",md),
-  sprintf(" %8.5f",unname(mc$overall[2])),
-  sprintf(" %7.5f",unname(mc$overall[7])),
-  sprintf(" %7.5f",unname(mc$overall[1])),
-  sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
-  sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
-  sprintf(" %6d",mc$table[1,1]),
-  sprintf(" %6d",mc$table[2,2])
-  ))
-  resultados[i,"lineag_cat"] = linea
+  if (salres){
+    linea <- gsub('\\.',',',paste(sep="",
+      "Hyperleda",
+      sprintf(" %5.3f",eta),
+      sprintf(" %5.2f",cs),
+      sprintf(" %4.1f",md),
+      sprintf(" %8.5f",unname(mc$overall[2])),
+      sprintf(" %7.5f",unname(mc$overall[7])),
+      sprintf(" %7.5f",unname(mc$overall[1])),
+      sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
+      sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
+      sprintf(" %6d",mc$table[1,1]),
+      sprintf(" %6d",mc$table[2,2])
+    ))
+    resultados[i,"lineag_cat"] = linea
+  }
   cat(sprintf("Hyperleda %8.5f %7.5f %7.5f %6d %6d %6d %7.5f %6d %6d %6d %7.5f %6d %6d",unname(mc$overall[2]),unname(mc$overall[7]),unname(mc$overall[1]),nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena),nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba),mc$table[1,1],mc$table[2,2]), file=fig, append=TRUE, sep="\n")
   rm(pred)
   pred        <- predict(bstaz, dprueba)
   pred        <- ifelse (pred > 0.5, 1, 0)
   mc          <- confusionMatrix(factor(pred,levels=0:1), factor(Eprueba,levels=0:1))
-  linea <- gsub('\\.',',',paste(sep="",
-  "Hyperleda",
-  sprintf(" %5.3f",eta),
-  sprintf(" %5.2f",cs),
-  sprintf(" %4.1f",md),
-  sprintf(" %8.5f",unname(mc$overall[2])),
-  sprintf(" %7.5f",unname(mc$overall[7])),
-  sprintf(" %7.5f",unname(mc$overall[1])),
-  sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
-  sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
-  sprintf(" %6d",mc$table[1,1]),
-  sprintf(" %6d",mc$table[2,2])
-  ))
-  resultados[i,"lineag_az"] = linea
+  if (salres){
+    linea <- gsub('\\.',',',paste(sep="",
+      "Hyperleda",
+      sprintf(" %5.3f",eta),
+      sprintf(" %5.2f",cs),
+      sprintf(" %4.1f",md),
+      sprintf(" %8.5f",unname(mc$overall[2])),
+      sprintf(" %7.5f",unname(mc$overall[7])),
+      sprintf(" %7.5f",unname(mc$overall[1])),
+      sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
+      sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
+      sprintf(" %6d",mc$table[1,1]),
+      sprintf(" %6d",mc$table[2,2])
+    ))
+    resultados[i,"lineag_az"] = linea
+  }
   cat(sprintf("Azar      %8.5f %7.5f %7.5f %6d %6d %6d %7.5f %6d %6d %6d %7.5f %6d %6d",unname(mc$overall[2]),unname(mc$overall[7]),unname(mc$overall[1]),nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena),nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba),mc$table[1,1],mc$table[2,2]), file=fig, append=TRUE, sep="\n")
   
   rm(pred)
@@ -342,38 +374,50 @@ for(i in 1:casos){
   pred    <- predict(bstazaj, dprueba)
   pred    <- ifelse (pred > 0.5, 1, 0)
   mc      <- confusionMatrix(factor(pred,levels=0:1), factor(Eprueba,levels=0:1))
-  linea <- gsub('\\.',',',paste(sep="",
-  "Hyperleda",
-  sprintf(" %5.3f",eta),
-  sprintf(" %5.2f",cs),
-  sprintf(" %4.1f",md),
-  sprintf(" %8.5f",unname(mc$overall[2])),
-  sprintf(" %7.5f",unname(mc$overall[7])),
-  sprintf(" %7.5f",unname(mc$overall[1])),
-  sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
-  sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
-  sprintf(" %6d",mc$table[1,1]),
-  sprintf(" %6d",mc$table[2,2])
-  ))
-  resultados[i,"lineag_azaj"] = linea
+  if (salres){
+    linea <- gsub('\\.',',',paste(sep="",
+      "Hyperleda",
+      sprintf(" %5.3f",eta),
+      sprintf(" %5.2f",cs),
+      sprintf(" %4.1f",md),
+      sprintf(" %8.5f",unname(mc$overall[2])),
+      sprintf(" %7.5f",unname(mc$overall[7])),
+      sprintf(" %7.5f",unname(mc$overall[1])),
+      sprintf(" %6d %6d %6d %7.5f",nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena)),
+      sprintf(" %6d %6d %6d %7.5f",nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba)),
+      sprintf(" %6d",mc$table[1,1]),
+      sprintf(" %6d",mc$table[2,2])
+    ))
+    resultados[i,"lineag_azaj"] = linea
+  }
   cat(sprintf("Azar ajus %8.5f %7.5f %7.5f %6d %6d %6d %7.5f %6d %6d %6d %7.5f %6d %6d",unname(mc$overall[2]),unname(mc$overall[7]),unname(mc$overall[1]),nrow(entrena),nrow(entrena)-sum(entrena$E),sum(entrena$E),sum(entrena$E)/nrow(entrena),nrow(prueba),nrow(prueba)-sum(prueba$E),sum(prueba$E),sum(prueba$E)/nrow(prueba),mc$table[1,1],mc$table[2,2]), file=fig, append=TRUE, sep="\n")
 
   rm(pred)
   gc()
-  setWinProgressBar(pb, i, title=paste("Total sectores ", round(100*i/casos, 0), "% hecho"))
+  setWinProgressBar(pb, casoact, title=paste("Total sectores ", round(100*casoact/casos, 0), "% hecho"))
 }
 close(pb)
 
-for(i in 1:casos){
-  l <- unlist(strsplit(datos[i,"celdas"], "[_]"))
-  cat(sprintf("%s %s %s %s\n",l[4],l[9],l[10],resultados[i,"linea_cat"]))
-  cat(sprintf("%s %s %s %s\n",l[4],l[9],l[10],resultados[i,"linea_az"]))
-  cat(sprintf("%s %s %s %s\n\n",l[4],l[9],l[10],resultados[i,"linea_azaj"]))
+if (salres){
+  for(i in casoini:casofin){
+    l <- unlist(strsplit(datos[i,"celdas"], "[_]"))
+    cat(sprintf("%s %s %s %s\n",l[4],l[9],l[10],resultados[i,"linea_cat"]))
+    cat(sprintf("%s %s %s %s\n",l[4],l[9],l[10],resultados[i,"linea_az"]))
+    cat(sprintf("%s %s %s %s\n\n",l[4],l[9],l[10],resultados[i,"linea_azaj"]))
+  }
+  for(i in casoini:casofin){
+    l <- unlist(strsplit(datos[i,"celdas"], "[_]"))
+    cat(sprintf("%s %s %s %s\n",l[4],l[9],l[10],resultados[i,"lineag_cat"]))
+    cat(sprintf("%s %s %s %s\n",l[4],l[9],l[10],resultados[i,"lineag_az"]))
+    cat(sprintf("%s %s %s %s\n\n",l[4],l[9],l[10],resultados[i,"lineag_azaj"]))
+  }
 }
-for(i in 1:casos){
-  l <- unlist(strsplit(datos[i,"celdas"], "[_]"))
-  cat(sprintf("%s %s %s %s\n",l[4],l[9],l[10],resultados[i,"lineag_cat"]))
-  cat(sprintf("%s %s %s %s\n",l[4],l[9],l[10],resultados[i,"lineag_az"]))
-  cat(sprintf("%s %s %s %s\n\n",l[4],l[9],l[10],resultados[i,"lineag_azaj"]))
-}
-
+tpo <- proc.time() - ptm
+op  <- options(digits.secs=6)
+momento <- Sys.time()
+print(momento)
+cat(sprintf("\n%s\n", momento), file=fi, append=TRUE, sep="\n")
+options(op)
+print(tpo)
+cat(sprintf("Tiempo. user: %7.1f  system: %7.1f  elapsed: %7.1f\n",as.numeric(tpo[1]),as.numeric(tpo[2]),as.numeric(tpo[3])), file=fi, append=TRUE, sep="\n")
+print("FIN")

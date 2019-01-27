@@ -1,4 +1,5 @@
 rm(list = ls())
+library(lattice)
 library(ggplot2)
 library(xgboost)
 library(caret)
@@ -41,10 +42,10 @@ tipomta <- "tot"
 marcas  <- "444"
 dmina   <- "600000"
 dmaxa   <- "1000000"
-anguloa <- "_8_12_15_70_"
+anguloa <- "_8_16_15_70_"
 dminb   <- "600000"
 dmaxb   <- "1000000"
-angulob <- "_12_16_15_70_"
+angulob <- "_8_16_15_70_"
 
 normalizar_estandar <- FALSE
 
@@ -60,7 +61,7 @@ unormp <-  1.0
 
 casoa   <- paste(sep="",disco,":/Gly/G_1_10_",marcas,anguloa,dmina,"_",dmaxa)
 casob   <- paste(sep="",disco,":/Gly/G_1_10_",marcas,angulob,dminb,"_",dmaxb)
-porcentaje_entrenar <- "60_"
+porcentaje_entrenar <- ""
 
 datosentrenar <- read.table(paste(sep="",casoa,"_muestra_",porcentaje_entrenar,tipomta,"_meA.csv"), header=TRUE, sep=";", na.strings="NA", dec=",", strip.white=TRUE)
 ponderae <- ifelse(datosentrenar$n == 0, 1, datosentrenar$n)
