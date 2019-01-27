@@ -401,6 +401,8 @@ for(i in casoini:casofin){
   gc()
   setWinProgressBar(pb, casoact, title=paste("Total sectores ", round(100*casoact/casos, 0), "% hecho"))
 }
+cat("--------- -------- ------- ------- ------ ------ ------ ------- ------ ------ ------ ------- ------ ------", file=fi, append=TRUE, sep="\n")
+cat("--------- -------- ------- ------- ------ ------ ------ ------- ------ ------ ------ ------- ------ ------", file=fig, append=TRUE, sep="\n")
 close(pb)
 
 if (salres){
