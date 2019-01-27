@@ -1,5 +1,4 @@
 rm(list = ls())
-library(lattice)
 library(xgboost)
 library(caret)
 library(data.table)
@@ -76,6 +75,7 @@ for(m in 1:length(lnr)){
       cs   <- lcs[j]
       for(k in 1:length(lmd)){
         md    <- lmd[k]
+        set.seed(1235) 
         bst   <- xgb.train(subsample = ss, colsample_bylevel = cs, colsample_bytree = cb, eta = eta, max_depth = md, data = dentrena, params = param, nrounds = nr, print_every_n = 1000)
         pred  <- predict(bst, dprueba)
         pred  <- ifelse (pred > 0.5, 1, 0)
