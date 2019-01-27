@@ -24,6 +24,18 @@ cs  <- 0.94
 ss  <- 1
 cb  <- 1
 
+# sin ponderar
+#nr  <- 620
+#eta <- 0.086
+#md  <- 13
+#cs  <- 0.94
+# ponderando
+#nr  <- 620
+#eta <- 0.083
+#md  <- 12
+#cs  <- 0.94
+
+
 disco   <- "C"
 tipomta <- "tot"
 marcas  <- "444"
