@@ -37,10 +37,12 @@ param <- list(
   objective   = "binary:logistic",
   eval_metric = "error")
 
-lnr  <- c(625)
-leta <- c(0.085)
-lcs  <- c(0.93,0.94,0.95,0.96,0.97,0.98,0.99)
-lmd  <- c(13)
+ss   <- 1
+cb   <- 1
+lnr  <- c(620,625,630)
+leta <- c(0.084,0.085,0.086)
+lcs  <- c(0.93,0.94,0.95,0.96,0.97)
+lmd  <- c(11,12,13)
 
 nl   <- 0
 resultados <- data.frame(
@@ -48,7 +50,7 @@ resultados <- data.frame(
   lineac = character(),
   stringsAsFactors = FALSE
 )
-fi <- paste(sep="",casoa,"_muestra_",porcentaje_entrenar,"Ajusta_Parametros_SP_XGBoost",desamb,".txt")
+fi <- paste(sep="",casoa,"_muestra_",porcentaje_entrenar,"Ajusta_Parametros_XGBoost_Sin_Ponderar",desamb,".txt")
 
 for(m in 1:length(lnr)){
   nr <- lnr[m]
@@ -59,15 +61,16 @@ for(m in 1:length(lnr)){
       for(k in 1:length(lmd)){
         md    <- lmd[k]
         set.seed(1235) 
-        bst   <- xgboost::xgboost(eta = eta, colsample_bylevel = cs, max_depth = md, data = dentrena, params = param, nrounds = nr, print_every_n = 1000)
+        bst   <- xgb.train(subsample = ss, colsample_bylevel = cs, colsample_bytree = cb, eta = eta, max_depth = md, data = dentrena, params = param, nrounds = nr, print_every_n = 1000)
         pred  <- predict(bst, dprueba)
         pred  <- ifelse (pred > 0.5, 1, 0)
         mc    <- confusionMatrix(factor(pred,levels=0:1), factor(Eprueba,levels=0:1))
         linea <- paste(sep="",
         "Hyperleda",
-        sprintf(" eta:%4.2f",eta),
+        sprintf(" nr:%6d",nr),
+        sprintf(" eta:%6.3f",eta),
         sprintf(" cs:%5.2f",cs),
-        sprintf(" md:%4.1f",md),
+        sprintf(" md:%4.0f",md),
         sprintf(" Kappa:%6.3f",unname(mc$overall[2])),
         sprintf(" McnemarPValue:%5.3f",unname(mc$overall[7])),
         sprintf(" Acierto:%7.3f",unname(mc$overall[1])*100),"%",
@@ -78,9 +81,10 @@ for(m in 1:length(lnr)){
         )
         lineac  <- gsub('\\.',',',paste(sep="",
         "Hyperleda",
-        sprintf(" %4.2f",eta),
+        sprintf(" %6d",nr),
+        sprintf(" %6.3f",eta),
         sprintf(" %5.2f",cs),
-        sprintf(" %4.1f",md),
+        sprintf(" %4.0f",md),
         sprintf(" %8.5f",unname(mc$overall[2])),
         sprintf(" %7.5f",unname(mc$overall[7])),
         sprintf(" %7.5f",unname(mc$overall[1])),

@@ -65,7 +65,7 @@ resultados <- data.frame(
   linea  = character(),
   stringsAsFactors = FALSE
 )
-fi <- paste(sep="",casoa,"_muestra_",porcentaje_entrenar,"Ajusta_Parametros_XGBoost",desamb,".txt")
+fi <- paste(sep="",casoa,"_muestra_",porcentaje_entrenar,"Ajusta_Parametros_XGBoost_Ponderando",desamb,".txt")
 
 for(m in 1:length(lnr)){
   nr <- lnr[m]
@@ -85,7 +85,7 @@ for(m in 1:length(lnr)){
           sprintf(" nr:%6d",nr),
           sprintf(" eta:%6.3f",eta),
           sprintf(" cs:%5.2f",cs),
-          sprintf(" md:%5.1f",md),
+          sprintf(" md:%5.0f",md),
           sprintf(" Kappa:%6.3f",unname(mc$overall[2])),
           sprintf(" McnemarPValue:%6.3f",unname(mc$overall[7])),
           sprintf(" Acierto:%7.3f",unname(mc$overall[1])*100),"%",
