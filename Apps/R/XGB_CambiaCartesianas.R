@@ -60,9 +60,9 @@ setDT(entrena)
 coordenadasEntrena  <- model.matrix(~.+0, data=entrena [,-c("E"), with=F]) 
 dentrena  <- xgb.DMatrix(data=coordenadasEntrena, label=Eentrena) 
 
-iter_x  <- (x_max - x_min)/x_inc + 1
-iter_y  <- (y_max - y_min)/y_inc + 1
-iter_z  <- (z_max - z_min)/z_inc + 1
+iter_x  <- abs(round((x_max - x_min)/x_inc, 0)) + 1
+iter_y  <- abs(round((y_max - y_min)/y_inc, 0)) + 1
+iter_z  <- abs(round((z_max - z_min)/z_inc, 0)) + 1
 iter_u  <- abs(round((u_max - u_min)/u_inc, 0)) + 1
 pruebas <- iter_x*iter_y*iter_z*iter_u
 
