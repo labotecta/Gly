@@ -18,6 +18,9 @@ normaliza =  function(df, rangos){
 }
 
 ponderar <- TRUE
+
+# los valores no son los optimos para la opción "ponderar" porque se determinaron en otras condiciones, pero las variaciones son insignificantes.
+
 nr  <- 620
 eta <- 0.084
 md  <- 13
@@ -59,6 +62,8 @@ ynormp <-  0.0
 znormp <-  0.0
 unormp <-  1.0
 
+# se supone que las muestras entán en la carpeta Gly de la unidad de "disco" especificada
+
 casoa   <- paste(sep="",disco,":/Gly/G_1_10_",marcas,anguloa,dmina,"_",dmaxa)
 casob   <- paste(sep="",disco,":/Gly/G_1_10_",marcas,angulob,dminb,"_",dmaxb)
 porcentaje_entrenar <- ""
@@ -88,7 +93,7 @@ entrena  <- datosentrenar[,-c(5)]
 Eentrena  <- as.numeric(entrena$E)
 setDT(entrena)
 coordenadasEntrena  <- model.matrix(~.+0, data = entrena [,-c("E"), with=F]) 
-#dentrena  <- xgb.DMatrix(data = coordenadasEntrena, label = Eentrena, weight = ponderae) 
+#dentrena  <- xgb.DMatrix(data = coordenadasEntrena, label = Eentrena, weight = ponderae) # No hace lo que se espera
 dentrena  <- xgb.DMatrix(data = coordenadasEntrena, label = Eentrena) 
 
 prueba   <- datosprobar  [,-c(5)]
@@ -111,7 +116,7 @@ if (ponderar){
   # 'eval_metric' no interviene en la optimización, sólo evalua a posteriori
   #
   # Como 'logregobj' devuelve las predicciones con la función logística ya aplicada hay
-  # que reformular 'evalerror' porque la de fábrica la espera antes de la la función logística
+  # que reformular 'evalerror' porque la de fábrica la espera antes de la función logística
   evalerror <- function(preds, dtrain) {
     labels <- getinfo(dtrain, "label")
     ppred  <- ifelse (preds > 0.5, 1, 0)
@@ -209,7 +214,7 @@ linea1c <- gsub('\\.',',',paste(sep="",
 ))
 datosentrenar <- read.table(paste(sep="",casoa,"_muestra_",porcentaje_entrenar,"tot_az_meA.csv"), header=TRUE, sep=";", na.strings="NA", dec=",", strip.white=TRUE)
 
-# Para muestras aleatorias es incoherente porque el número de galaxias 'porcentaje_entrenar' celda es siempre uno
+# Para muestras aleatorias es incoherente la opción de ponderar porque el número de "galaxias / celda" es siempre uno
 
 ponderae <- ifelse(datosentrenar$n == 0, 1, datosentrenar$n)
 sumapon  <- sum(ponderae)
@@ -329,7 +334,7 @@ linea2cbis <- gsub('\\.',',',paste(sep="",
 
 datosentrenar <- read.table(paste(sep="",casoa,"_muestra_",porcentaje_entrenar,"tot_azaj_meA.csv"), header=TRUE, sep=";", na.strings="NA", dec=",", strip.white=TRUE)
 
-# Para muestras aleatorias es incoherente porque el número de galaxias porcentaje_entrenar celda es siempre uno
+# Para muestras aleatorias es incoherente la opción de ponderar porque el número de "galaxias / celda" es siempre uno
 
 ponderae <- ifelse(datosentrenar$n == 0, 1, datosentrenar$n)
 sumapon  <- sum(ponderae)
