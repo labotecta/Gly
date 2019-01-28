@@ -9,22 +9,23 @@ library(data.table)
 # Se ENFOCA cambiando la escala mediante la aplicación de un factor '1 / u'
 # La unidad de rangos y variaciones es una celda.
 
-desamb <- "_Lucas"
-x_min  <- +5
-x_max  <- +7
-x_inc  <- 0.2
+desamb <- "_EJ01"
 
-y_min  <- +18
-y_max  <- +22
-y_inc  <- 0.2
+x_min  <- +5.90
+x_max  <- +6.40
+x_inc  <-  0.05
 
-z_min  <- -20
-z_max  <- -15
-z_inc  <- 0.2
+y_min  <- +20.30
+y_max  <- +20.90
+y_inc  <-   0.05
 
-u_min  <- 1.4
-u_max  <- 1.6
-u_inc  <- 0.01
+z_min  <- -18.00
+z_max  <- -17.40
+z_inc  <-   0.05
+
+u_min  <- 1.40
+u_max  <- 1.45
+u_inc  <- 0.005
 
 tot_resultados <- TRUE     # sepadados por ';'
 tot_salidas    <- FALSE    # igual que tot_resultados pero formateados y sin ';'
@@ -174,9 +175,9 @@ dprueba     <- xgb.DMatrix(data=coordenadasPrueba, label=Eprueba)
 pred        <- predict (bst, dprueba)
 pred        <- ifelse (pred > 0.5, 1, 0)
 acto_ini    <- 1 - as.numeric(sum(pred != Eprueba))/length(Eprueba)
-cat("despl-x despl-y despl-z  unidad    mejor", file=fi, append=TRUE, sep="\n")
-cat("------- ------- ------- ------- --------", file=fi, append=TRUE, sep="\n")
-cat(sprintf("%7.2f %7.2f %7.2f %7.3f %7.3f%s", 0, 0, 0, 1.0, acto_ini*100, "%"), file=fi, append=TRUE, sep="\n")
+cat("despl-x  despl-y  despl-z   unidad     mejor", file=fi, append=TRUE, sep="\n")
+cat("-------  -------  -------  -------  --------", file=fi, append=TRUE, sep="\n")
+cat(sprintf("%7.2f  %7.2f  %7.2f  %7.3f  %7.3f%s", 0, 0, 0, 1.0, acto_ini*100, "%"), file=fi, append=TRUE, sep="\n")
 if (tot_salidas){
   cat("despl-x despl-y despl-z  unidad  acierto", file=fitot, append=TRUE, sep="\n")
   cat("------- ------- ------- ------- --------", file=fitot, append=TRUE, sep="\n")
@@ -196,23 +197,23 @@ aciertosXY_mejorZU$z <- 0.5
 
 pb <- winProgressBar(title=casoa, min=1, max=iter_x, width=400)
 ix <- 0
-for (i in X){
+for (x_act in X){
   ix <- ix + 1
 
   setWinProgressBar(pb, (ix-1), title=paste(casoa," ", round((ix-1)/iter_x*100, 0), "% hecho"))
 
   iy <- 0
-  for (j in Y){
+  for (y_act in Y){
     iy <- iy + 1
     
     # totalizar en z y U
     
     zu_mejoracierto <- 0
-    for (k in seq(z_min,z_max,z_inc)){
-      for (u in seq(u_min,u_max,u_inc)){
-        prueba$x <- (pruebaini$x + i) / u
-        prueba$y <- (pruebaini$y + j) / u
-        prueba$z <- (pruebaini$z + k) / u
+    for (z_act in seq(z_min,z_max,z_inc)){
+      for (u_act in seq(u_min,u_max,u_inc)){
+        prueba$x <- (pruebaini$x + x_act) / u_act
+        prueba$y <- (pruebaini$y + y_act) / u_act
+        prueba$z <- (pruebaini$z + z_act) / u_act
         
         coordenadasPrueba <- model.matrix(~.+0, data=prueba[,, with=F])
         dprueba           <- xgb.DMatrix(data=coordenadasPrueba, label=Eprueba)
@@ -220,22 +221,50 @@ for (i in X){
         pred              <- ifelse (pred > 0.5, 1, 0)
         acto              <- 1 - as.numeric(sum(pred != Eprueba))/np
         if (tot_salidas){
-          cat(sprintf("%7.2f %7.2f %7.2f %7.3f %7.5f", i, j, k, u, acto), file=fitot, append=TRUE, sep="\n")
+          cat(sprintf("%7.2f %7.2f %7.2f %7.3f %7.5f", x_act, y_act, z_act, u_act, acto), file=fitot, append=TRUE, sep="\n")
         }
         if (tot_resultados){
           if (acto > zu_mejoracierto){
             zu_mejoracierto      <- acto
-            mejoresZU[iy]        <- sprintf("%7.2f %7.3f", k, u)
+            mejoresZU[iy]        <- sprintf("%7.2f %7.3f", z_act, u_act)
             aciertos_mejorZU[iy] <- zu_mejoracierto
           }
         }
         if (acto > acto_mejor){
-          dx         <- i
-          dy         <- j
-          dz         <- k
-          du         <- u
+          dx         <- x_act
+          dy         <- y_act
+          dz         <- z_act
+          du         <- u_act
           acto_mejor <- acto
-          cat(sprintf("%7.2f %7.2f %7.2f %7.3f %7.3f%s", i, j, k, u, acto_mejor*100, "%"), file=fi, append=TRUE, sep="\n")
+          if (x_act==x_min){
+            lx <- "i"
+          } else if (x_act==x_max){
+            lx <- "s"
+          } else{
+            lx <- " "
+          }
+          if (y_act==y_min){
+            ly <- "i"
+          } else if (y_act==y_max){
+            ly <- "s"
+          } else{
+            ly <- " "
+          }
+          if (z_act==z_min){
+            lz <- "i"
+          } else if (z_act==z_max){
+            lz <- "s"
+          } else{
+            lz <- " "
+          }
+          if (u_act==u_min){
+            lu <- "i"
+          } else if (u_act==u_max){
+            lu <- "s"
+          } else{
+            lu <- " "
+          }
+          cat(sprintf("%7.2f%s %7.2f%s %7.2f%s %7.3f%s %7.3f%s", x_act, lx, y_act, ly, z_act, lz, u_act, lu, acto_mejor*100, "%"), file=fi, append=TRUE, sep="\n")
         }
       }
     }
@@ -252,7 +281,10 @@ for (i in X){
 
   }
 }
-cat("------- ------- ------- ------- --------", file=fi, append=TRUE, sep="\n")
+if (tot_salidas){
+  cat("------- ------- ------- ------- --------", file=fitot, append=TRUE, sep="\n")
+}
+cat("-------  -------  -------  -------  --------", file=fi, append=TRUE, sep="\n")
 cat(sprintf("Mejora Total: %7.3f%s", (acto_mejor - acto_ini)*100, "%"), file=fi, append=TRUE, sep="\n")
 close(pb)
 
