@@ -95,7 +95,7 @@ cat(sprintf("z inc      : %9.2f", z_inc),   file=fi, append=TRUE, sep="\n")
 cat(sprintf("iteraciones: %9d\n", iter_z),  file=fi, append=TRUE, sep="\n")
 cat(sprintf("U min      : %9.2f", u_min),   file=fi, append=TRUE, sep="\n")
 cat(sprintf("U max      : %9.2f", u_max),   file=fi, append=TRUE, sep="\n")
-cat(sprintf("U inc      : %9.2f\n", u_inc), file=fi, append=TRUE, sep="\n")
+cat(sprintf("U inc      : %9.2f", u_inc),   file=fi, append=TRUE, sep="\n")
 cat(sprintf("iteraciones: %9d\n", iter_u),  file=fi, append=TRUE, sep="\n")
 cat(sprintf("Pruebas    : %9.0f\n",pruebas),file=fi, append=TRUE, sep="\n")
 
@@ -124,7 +124,7 @@ if (tot_salidas){
   cat(sprintf("iteraciones: %9d\n", iter_z),  file=fitot, append=TRUE, sep="\n")
   cat(sprintf("U min      : %9.2f", u_min),   file=fitot, append=TRUE, sep="\n")
   cat(sprintf("U max      : %9.2f", u_max),   file=fitot, append=TRUE, sep="\n")
-  cat(sprintf("U inc      : %9.2f\n", u_inc), file=fitot, append=TRUE, sep="\n")
+  cat(sprintf("U inc      : %9.2f", u_inc),   file=fitot, append=TRUE, sep="\n")
   cat(sprintf("iteraciones: %9d\n", iter_u),  file=fitot, append=TRUE, sep="\n")
   cat(sprintf("Pruebas    : %9.0f\n",pruebas),file=fitot, append=TRUE, sep="\n")
 }
